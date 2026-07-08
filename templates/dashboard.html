@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<section class="section">
+    <div class="section-head">
+        <h1>Welcome, {{ session.user_name }}</h1>
+        <p>Your booking activity and hall demand summary.</p>
+    </div>
+    <div class="stats">
+        <div><span>Your Bookings</span><strong>{{ bookings|length }}</strong></div>
+        <div><span>Hall Categories</span><strong>{{ hall_stats|length }}</strong></div>
+        <div><span>Status</span><strong>Active</strong></div>
+    </div>
+    <div class="table-card">
+        <h2>Popular Halls</h2>
+        <table>
+            <thead><tr><th>Hall</th><th>Total Bookings</th></tr></thead>
+            <tbody>
+                {% for row in hall_stats %}
+                <tr><td>{{ row.hall_name }}</td><td>{{ row.total }}</td></tr>
+                {% else %}
+                <tr><td colspan="2">No bookings yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

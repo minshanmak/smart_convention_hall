@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Home | Smart Convention Hall{% endblock %}
+{% block content %}
+<section class="hero">
+    <div>
+        <p class="eyebrow">AI assisted event planning</p>
+        <h1>Smart Convention Hall Booking and Management System</h1>
+        <p class="hero-text">Book halls, estimate event cost, get hall recommendations, manage bookings, and generate reports from one simple web application.</p>
+        <div class="actions">
+            <a class="button primary" href="{{ url_for('booking') }}">Book a Hall</a>
+            <a class="button secondary" href="{{ url_for('recommend') }}">Get Recommendation</a>
+        </div>
+    </div>
+    <div class="hero-panel">
+        <span>Available Capacity</span>
+        <strong>100 - 1000 Guests</strong>
+        <span>Starting From</span>
+        <strong>Rs. 40,000</strong>
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-head">
+        <h2>Convention Halls</h2>
+        <p>Choose a hall based on event type, capacity and facilities.</p>
+    </div>
+    <div class="card-grid">
+        {% for hall in halls %}
+        <article class="card">
+            <img class="hall-photo" src="{{ hall.photo }}" alt="{{ hall.name }}">
+            <div class="card-body">
+                <h3>{{ hall.name }}</h3>
+                <p>{{ hall.features }}</p>
+                <div class="meta">
+                    <span>{{ hall.capacity }} guests</span>
+                    <span>{{ hall.best_for }}</span>
+                    <span>Rs. {{ "{:,}".format(hall.base_price) }}</span>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

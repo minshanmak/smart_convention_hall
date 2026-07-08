@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Admin{% endblock %}
+{% block content %}
+<section class="section">
+    <div class="section-head">
+        <h1>Admin Dashboard</h1>
+        <a class="button secondary" href="{{ url_for('admin_users') }}">View Users</a>
+    </div>
+    <div class="stats">
+        <div><span>Total Users</span><strong>{{ users }}</strong></div>
+        <div><span>Total Bookings</span><strong>{{ bookings }}</strong></div>
+        <div><span>Admin</span><strong>{{ session.admin_name }}</strong></div>
+    </div>
+    <div class="table-card">
+        <h2>Latest Bookings</h2>
+        <table>
+            <thead><tr><th>User</th><th>Hall</th><th>Event</th><th>Date</th><th>Advance</th></tr></thead>
+            <tbody>
+                {% for booking in latest %}
+                <tr>
+                    <td>{{ booking.user_name }}</td>
+                    <td>{{ booking.hall_name }}</td>
+                    <td>{{ booking.event_type }}</td>
+                    <td>{{ booking.booking_date }}</td>
+                    <td>Rs. {{ "{:,}".format(booking.advance_payment) }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5">No bookings yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

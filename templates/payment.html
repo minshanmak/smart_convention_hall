@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Payment | Smart Convention Hall{% endblock %}
+{% block content %}
+<section class="section payment-page">
+    <div class="section-head">
+        <div>
+            <h1>Booking Confirmed</h1>
+            <p>Complete the advance payment to secure your booking.</p>
+        </div>
+        <a class="button secondary" href="{{ url_for('view_bookings') }}">View Bookings</a>
+    </div>
+
+    <div class="payment-layout">
+        <article class="table-card">
+            <h2>Booking Details</h2>
+            <table>
+                <tbody>
+                    <tr><th>Booking ID</th><td>#{{ booking.id }}</td></tr>
+                    <tr><th>Name</th><td>{{ booking.user_name }}</td></tr>
+                    <tr><th>Hall</th><td>{{ booking.hall_name }}</td></tr>
+                    <tr><th>Event</th><td>{{ booking.event_type }}</td></tr>
+                    <tr><th>Guests</th><td>{{ booking.guests }}</td></tr>
+                    <tr><th>Date</th><td>{{ booking.booking_date }}</td></tr>
+                    <tr><th>Advance Payment</th><td>Rs. {{ "{:,}".format(booking.advance_payment) }}</td></tr>
+                    <tr><th>Status</th><td>{{ booking.status }}</td></tr>
+                </tbody>
+            </table>
+        </article>
+
+        <aside class="info-card">
+            <h2>Payment Option</h2>
+            <div class="payment-box">
+                <img class="payment-qr" src="{{ url_for('static', filename='images/payment-qr.svg') }}" alt="Payment QR code">
+                <div>
+                    <strong>Pay Rs. {{ "{:,}".format(booking.advance_payment) }}</strong>
+                    <p>Scan QR or use bank details to pay the advance amount.</p>
+                </div>
+            </div>
+            <dl class="bank-details">
+                <div><dt>Account Name</dt><dd>{{ payment_details.account_name }}</dd></div>
+                <div><dt>Account No</dt><dd>{{ payment_details.account_number }}</dd></div>
+                <div><dt>IFSC</dt><dd>{{ payment_details.ifsc }}</dd></div>
+                <div><dt>Bank</dt><dd>{{ payment_details.bank }}</dd></div>
+                <div><dt>UPI ID</dt><dd>{{ payment_details.upi_id }}</dd></div>
+            </dl>
+        </aside>
+    </div>
+</section>
+{% endblock %}

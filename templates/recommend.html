@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}AI Recommendation{% endblock %}
+{% block content %}
+<section class="form-page split">
+    <form class="form-card" method="post">
+        <h1>AI Hall Recommendation</h1>
+        <label>Event Type
+            <select name="event_type" required>
+                <option>Wedding</option>
+                <option>Conference</option>
+                <option>Birthday Party</option>
+                <option>Exhibition</option>
+            </select>
+        </label>
+        <label>Number of Guests <input type="number" name="guests" min="1" required></label>
+        <button class="button primary" type="submit">Recommend Hall</button>
+    </form>
+    <aside class="info-card">
+        <h2>Result</h2>
+        {% if result %}
+            <strong>{{ result.name }}</strong>
+            <p>{{ result.reason }}</p>
+            <p>Approximate hall price: ₹{{ "{:,}".format(result.price) }}</p>
+        {% else %}
+            <p>Enter your event details to receive a smart hall suggestion.</p>
+        {% endif %}
+    </aside>
+</section>
+{% endblock %}

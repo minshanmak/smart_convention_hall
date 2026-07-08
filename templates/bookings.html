@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Bookings{% endblock %}
+{% block content %}
+<section class="section">
+    <div class="section-head">
+        <h1>My Bookings</h1>
+        <a class="button secondary" href="{{ url_for('download_report') }}">Download PDF</a>
+    </div>
+    <form class="search" method="get">
+        <input name="search" value="{{ search }}" placeholder="Search by hall, event or date">
+        <button class="button secondary" type="submit">Search</button>
+    </form>
+    <div class="table-card">
+        <table>
+            <thead><tr><th>Hall</th><th>Event</th><th>Guests</th><th>Date</th><th>Advance</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td>{{ booking.hall_name }}</td>
+                    <td>{{ booking.event_type }}</td>
+                    <td>{{ booking.guests }}</td>
+                    <td>{{ booking.booking_date }}</td>
+                    <td>Rs. {{ "{:,}".format(booking.advance_payment) }}</td>
+                    <td>{{ booking.status }}</td>
+                    <td class="row-actions">
+                        <a href="{{ url_for('edit_booking', booking_id=booking.id) }}">Edit</a>
+                        <form method="post" action="{{ url_for('delete_booking', booking_id=booking.id) }}">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7">No bookings found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

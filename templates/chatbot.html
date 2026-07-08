@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Chatbot{% endblock %}
+{% block content %}
+<section class="form-page">
+    <form class="form-card wide" method="post">
+        <h1>AI Help Chatbot</h1>
+        <label>Ask a question
+            <textarea name="message" rows="5" placeholder="Example: What is the price for a wedding hall?" required></textarea>
+        </label>
+        <button class="button primary" type="submit">Ask</button>
+        {% if response %}
+            <div class="chat-response">{{ response }}</div>
+        {% endif %}
+    </form>
+</section>
+{% endblock %}

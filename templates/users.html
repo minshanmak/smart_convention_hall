@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<section class="section">
+    <div class="section-head">
+        <h1>Registered Users</h1>
+        <a class="button secondary" href="{{ url_for('admin') }}">Back</a>
+    </div>
+    <div class="table-card">
+        <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Joined</th></tr></thead>
+            <tbody>
+                {% for user in users %}
+                <tr><td>{{ user.id }}</td><td>{{ user.name }}</td><td>{{ user.email }}</td><td>{{ user.created_at }}</td></tr>
+                {% else %}
+                <tr><td colspan="4">No users registered.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
