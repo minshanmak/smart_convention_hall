@@ -1,5 +1,6 @@
+import csv
 from datetime import datetime
-from io import BytesIO
+from io import BytesIO, StringIO
 import os
 import sqlite3
 
@@ -549,6 +550,198 @@ def admin():
     bookings = db.execute("SELECT COUNT(*) AS total FROM bookings").fetchone()["total"]
     latest = db.execute("SELECT * FROM bookings ORDER BY created_at DESC LIMIT 8").fetchall()
     return render_template("admin.html", users=users, bookings=bookings, latest=latest)
+
+
+@app.route("/admin/reports", methods=["GET"])
+def admin_reports():
+    if not admin_required():
+        return redirect(url_for("admin_login"))
+
+    db = get_db()
+    start_date = request.args.get("start_date", "").strip()
+    end_date = request.args.get("end_date", "").strip()
+    hall_filter = request.args.get("hall", "").strip()
+    event_filter = request.args.get("event_type", "").strip()
+    status_filter = request.args.get("status", "").strip()
+
+    query = "SELECT * FROM bookings WHERE 1=1"
+    params = []
+    if start_date:
+        query += " AND booking_date >= ?"
+        params.append(start_date)
+    if end_date:
+        query += " AND booking_date <= ?"
+        params.append(end_date)
+    if hall_filter:
+        query += " AND hall_name = ?"
+        params.append(hall_filter)
+    if event_filter:
+        query += " AND event_type = ?"
+        params.append(event_filter)
+    if status_filter:
+        query += " AND status = ?"
+        params.append(status_filter)
+    query += " ORDER BY booking_date DESC"
+
+    bookings = db.execute(query, params).fetchall()
+
+    summary = {
+        "total_bookings": len(bookings),
+        "confirmed_bookings": sum(1 for b in bookings if str(b["status"]).lower() == "confirmed"),
+        "pending_bookings": sum(1 for b in bookings if str(b["status"]).lower() == "pending"),
+        "cancelled_or_rejected_bookings": sum(
+            1 for b in bookings if str(b["status"]).lower() in {"cancelled", "rejected"}
+        ),
+        "total_customers": len({b["user_id"] for b in bookings if b["user_id"] is not None}),
+        "total_advance_amount": sum(int(b["advance_payment"] or 0) for b in bookings),
+        "advance_payments_received": sum(1 for b in bookings if int(b["advance_payment"] or 0) >= MIN_ADVANCE_PAYMENT),
+    }
+
+    monthly_bookings = db.execute(
+        "SELECT substr(booking_date, 1, 7) AS month, COUNT(*) AS total FROM bookings GROUP BY substr(booking_date, 1, 7) ORDER BY month"
+    ).fetchall()
+    monthly_advance = db.execute(
+        "SELECT substr(booking_date, 1, 7) AS month, SUM(advance_payment) AS total FROM bookings GROUP BY substr(booking_date, 1, 7) ORDER BY month"
+    ).fetchall()
+    booking_statuses = db.execute(
+        "SELECT status, COUNT(*) AS total FROM bookings GROUP BY status ORDER BY total DESC"
+    ).fetchall()
+    event_types = db.execute(
+        "SELECT event_type, COUNT(*) AS total FROM bookings GROUP BY event_type ORDER BY total DESC"
+    ).fetchall()
+    hall_performance = db.execute(
+        "SELECT hall_name, COUNT(*) AS total FROM bookings GROUP BY hall_name ORDER BY total DESC"
+    ).fetchall()
+
+    halls = [row["hall_name"] for row in db.execute("SELECT DISTINCT hall_name FROM bookings ORDER BY hall_name")]
+    event_types_list = [row["event_type"] for row in db.execute("SELECT DISTINCT event_type FROM bookings ORDER BY event_type")]
+    statuses = [row["status"] for row in db.execute("SELECT DISTINCT status FROM bookings ORDER BY status")]
+
+    return render_template(
+        "admin_reports.html",
+        bookings=bookings,
+        summary=summary,
+        monthly_bookings=monthly_bookings,
+        monthly_advance=monthly_advance,
+        booking_statuses=booking_statuses,
+        event_types=event_types,
+        hall_performance=hall_performance,
+        halls=halls,
+        event_types_list=event_types_list,
+        statuses=statuses,
+        start_date=start_date,
+        end_date=end_date,
+        hall_filter=hall_filter,
+        event_filter=event_filter,
+        status_filter=status_filter,
+    )
+
+
+@app.route("/admin/reports/pdf")
+def admin_reports_pdf():
+    if not admin_required():
+        return redirect(url_for("admin_login"))
+
+    db = get_db()
+    start_date = request.args.get("start_date", "").strip()
+    end_date = request.args.get("end_date", "").strip()
+    hall_filter = request.args.get("hall", "").strip()
+    event_filter = request.args.get("event_type", "").strip()
+    status_filter = request.args.get("status", "").strip()
+
+    query = "SELECT * FROM bookings WHERE 1=1"
+    params = []
+    if start_date:
+        query += " AND booking_date >= ?"
+        params.append(start_date)
+    if end_date:
+        query += " AND booking_date <= ?"
+        params.append(end_date)
+    if hall_filter:
+        query += " AND hall_name = ?"
+        params.append(hall_filter)
+    if event_filter:
+        query += " AND event_type = ?"
+        params.append(event_filter)
+    if status_filter:
+        query += " AND status = ?"
+        params.append(status_filter)
+    query += " ORDER BY booking_date DESC"
+
+    bookings = db.execute(query, params).fetchall()
+    total_advance = sum(int(b["advance_payment"] or 0) for b in bookings)
+
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer)
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(120, 800, "Smart Convention Hall - Reports & Analytics")
+    pdf.setFont("Helvetica", 11)
+    pdf.drawString(40, 770, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    pdf.drawString(40, 750, f"Filters: {start_date or '-'} to {end_date or '-'} | Hall: {hall_filter or '-'} | Event: {event_filter or '-'} | Status: {status_filter or '-'}")
+    pdf.drawString(40, 730, f"Total Bookings: {len(bookings)} | Advance Amount Collected: Rs. {total_advance:,}")
+    y = 700
+    for booking_data in bookings:
+        pdf.drawString(
+            40,
+            y,
+            f"#{booking_data['id']} | {booking_data['user_name']} | {booking_data['hall_name']} | {booking_data['event_type']} | {booking_data['booking_date']} | Status: {booking_data['status']} | Advance: Rs. {booking_data['advance_payment']}",
+        )
+        y -= 16
+        if y < 60:
+            pdf.showPage()
+            y = 800
+    pdf.save()
+    buffer.seek(0)
+
+    response = make_response(buffer.getvalue())
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = "attachment; filename=reports_analytics.pdf"
+    return response
+
+
+@app.route("/admin/reports/csv")
+def admin_reports_csv():
+    if not admin_required():
+        return redirect(url_for("admin_login"))
+
+    db = get_db()
+    start_date = request.args.get("start_date", "").strip()
+    end_date = request.args.get("end_date", "").strip()
+    hall_filter = request.args.get("hall", "").strip()
+    event_filter = request.args.get("event_type", "").strip()
+    status_filter = request.args.get("status", "").strip()
+
+    query = "SELECT id, user_name, hall_name, event_type, booking_date, guests, status, advance_payment FROM bookings WHERE 1=1"
+    params = []
+    if start_date:
+        query += " AND booking_date >= ?"
+        params.append(start_date)
+    if end_date:
+        query += " AND booking_date <= ?"
+        params.append(end_date)
+    if hall_filter:
+        query += " AND hall_name = ?"
+        params.append(hall_filter)
+    if event_filter:
+        query += " AND event_type = ?"
+        params.append(event_filter)
+    if status_filter:
+        query += " AND status = ?"
+        params.append(status_filter)
+    query += " ORDER BY booking_date DESC"
+
+    rows = db.execute(query, params).fetchall()
+
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Booking ID", "Customer Name", "Hall Name", "Event Type", "Event Date", "Guests", "Booking Status", "Advance Amount"])
+    for row in rows:
+        writer.writerow([row["id"], row["user_name"], row["hall_name"], row["event_type"], row["booking_date"], row["guests"], row["status"], row["advance_payment"]])
+
+    response = make_response(output.getvalue())
+    response.headers["Content-Type"] = "text/csv; charset=utf-8"
+    response.headers["Content-Disposition"] = "attachment; filename=reports_analytics.csv"
+    return response
 
 
 @app.route("/admin/users")
