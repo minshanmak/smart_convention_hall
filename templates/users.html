@@ -8,12 +8,25 @@
     </div>
     <div class="table-card">
         <table>
-            <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Joined</th></tr></thead>
+            <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Joined</th><th>Action</th></tr></thead>
             <tbody>
                 {% for user in users %}
-                <tr><td>{{ user.id }}</td><td>{{ user.name }}</td><td>{{ user.email }}</td><td>{{ user.created_at }}</td></tr>
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.created_at }}</td>
+                    <td>
+                        <div class="row-actions">
+                            <a class="button secondary" href="{{ url_for('admin_edit_user', user_id=user.id) }}">Edit</a>
+                            <form method="post" action="{{ url_for('admin_delete_user', user_id=user.id) }}">
+                                <button class="button danger" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
                 {% else %}
-                <tr><td colspan="4">No users registered.</td></tr>
+                <tr><td colspan="5">No users registered.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

@@ -26,9 +26,17 @@
                     <td>{{ booking.event_type }}</td>
                     <td>{{ booking.booking_date }}</td>
                     <td>Rs. {{ "{:,}".format(booking.advance_payment) }}</td>
+                    <td>
+                        <div class="row-actions">
+                            <a class="button secondary" href="{{ url_for('admin_edit_booking', booking_id=booking.id) }}">Edit</a>
+                            <form method="post" action="{{ url_for('admin_delete_booking', booking_id=booking.id) }}">
+                                <button class="button danger" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="5">No bookings yet.</td></tr>
+                <tr><td colspan="6">No bookings yet.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

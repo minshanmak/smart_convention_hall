@@ -67,6 +67,22 @@ HALLS = [
         "features": "Modern seating, stage lighting, sound system, parking area",
         "photo": "/static/images/mak-auditorium.jpeg",
     },
+    {
+        "name": "Shadhi Lounge",
+        "capacity": 800,
+        "best_for": "Conference",
+        "base_price": 70000,
+        "features": "Elegant interiors, premium seating, AV support, catering space",
+        "photo": "static/images/shadhi-lounge-malappuram-auditoriums-s2dz5gzoer.avif",
+    },
+    {
+        "name": "VALENCIA GALLERIA ",
+        "capacity": 2000,
+        "best_for": "Wedding",
+        "base_price": 100000,
+        "features": "Grand foyer, luxury decor, large banquet area, parking",
+        "photo": "static/images/velancia.jpg",
+    },
 ]
 
 
@@ -366,77 +382,18 @@ def view_bookings():
 
 @app.route("/booking/<int:booking_id>/edit", methods=["GET", "POST"])
 def edit_booking(booking_id):
-    if not login_required():
-        return redirect(url_for("login"))
+    if not admin_required():
+        return redirect(url_for("admin_login"))
 
-    booking_data = get_db().execute(
-        "SELECT * FROM bookings WHERE id = ? AND user_id = ?",
-        (booking_id, session["user_id"]),
-    ).fetchone()
-    if booking_data is None:
-        flash("Booking not found.", "danger")
-        return redirect(url_for("view_bookings"))
-
-    if request.method == "POST":
-        hall_name = request.form["hall_name"]
-        booking_date = request.form["booking_date"]
-        advance_payment = int(request.form.get("advance_payment") or MIN_ADVANCE_PAYMENT)
-        clash = get_db().execute(
-            "SELECT id FROM bookings WHERE hall_name = ? AND booking_date = ? AND id != ?",
-            (hall_name, booking_date, booking_id),
-        ).fetchone()
-        if clash:
-            flash(f"{hall_name} is not available on {booking_date}. Please choose another hall or date.", "danger")
-            return render_template("edit_booking.html", booking=booking_data, halls=HALLS)
-        if advance_payment < MIN_ADVANCE_PAYMENT:
-            flash(f"Advance payment must be at least Rs. {MIN_ADVANCE_PAYMENT:,}.", "danger")
-            return render_template(
-                "edit_booking.html",
-                booking=booking_data,
-                halls=HALLS,
-                min_advance_payment=MIN_ADVANCE_PAYMENT,
-            )
-
-        get_db().execute(
-            """
-            UPDATE bookings
-            SET hall_name = ?, event_type = ?, guests = ?, booking_date = ?, advance_payment = ?
-            WHERE id = ? AND user_id = ?
-            """,
-            (
-                hall_name,
-                request.form["event_type"],
-                int(request.form["guests"]),
-                booking_date,
-                advance_payment,
-                booking_id,
-                session["user_id"],
-            ),
-        )
-        get_db().commit()
-        flash("Booking updated successfully.", "success")
-        return redirect(url_for("view_bookings"))
-
-    return render_template(
-        "edit_booking.html",
-        booking=booking_data,
-        halls=HALLS,
-        min_advance_payment=MIN_ADVANCE_PAYMENT,
-    )
+    return redirect(url_for("admin_edit_booking", booking_id=booking_id))
 
 
 @app.route("/booking/<int:booking_id>/delete", methods=["POST"])
 def delete_booking(booking_id):
-    if not login_required():
-        return redirect(url_for("login"))
+    if not admin_required():
+        return redirect(url_for("admin_login"))
 
-    get_db().execute(
-        "DELETE FROM bookings WHERE id = ? AND user_id = ?",
-        (booking_id, session["user_id"]),
-    )
-    get_db().commit()
-    flash("Booking deleted.", "success")
-    return redirect(url_for("view_bookings"))
+    return redirect(url_for("admin_delete_booking", booking_id=booking_id))
 
 
 @app.route("/recommend", methods=["GET", "POST"])
@@ -751,6 +708,86 @@ def admin_users():
 
     users = get_db().execute("SELECT id, name, email, created_at FROM users ORDER BY id DESC").fetchall()
     return render_template("users.html", users=users)
+
+
+@app.route("/admin/users/<int:user_id>/edit", methods=["GET", "POST"])
+def admin_edit_user(user_id):
+    if not admin_required():
+        return redirect(url_for("admin_login"))
+
+    user = get_db().execute("SELECT id, name, email FROM users WHERE id = ?", (user_id,)).fetchone()
+    if user is None:
+        flash("User not found.", "danger")
+        return redirect(url_for("admin_users"))
+
+    if request.method == "POST":
+        name = request.form["name"].strip()
+        email = request.form["email"].strip().lower()
+        get_db().execute(
+            "UPDATE users SET name = ?, email = ? WHERE id = ?",
+            (name, email, user_id),
+        )
+        get_db().commit()
+        flash("User updated successfully.", "success")
+        return redirect(url_for("admin_users"))
+
+    return render_template("admin_edit_user.html", user=user)
+
+
+@app.route("/admin/users/<int:user_id>/delete", methods=["POST"])
+def admin_delete_user(user_id):
+    if not admin_required():
+        return redirect(url_for("admin_login"))
+
+    get_db().execute("DELETE FROM bookings WHERE user_id = ?", (user_id,))
+    get_db().execute("DELETE FROM users WHERE id = ?", (user_id,))
+    get_db().commit()
+    flash("User deleted successfully.", "success")
+    return redirect(url_for("admin_users"))
+
+
+@app.route("/admin/bookings/<int:booking_id>/edit", methods=["GET", "POST"])
+def admin_edit_booking(booking_id):
+    if not admin_required():
+        return redirect(url_for("admin_login"))
+
+    booking_data = get_db().execute("SELECT * FROM bookings WHERE id = ?", (booking_id,)).fetchone()
+    if booking_data is None:
+        flash("Booking not found.", "danger")
+        return redirect(url_for("admin"))
+
+    if request.method == "POST":
+        hall_name = request.form["hall_name"]
+        event_type = request.form["event_type"]
+        guests = int(request.form["guests"])
+        booking_date = request.form["booking_date"]
+        advance_payment = int(request.form.get("advance_payment") or MIN_ADVANCE_PAYMENT)
+        status = request.form.get("status", booking_data["status"])
+
+        get_db().execute(
+            """
+            UPDATE bookings
+            SET hall_name = ?, event_type = ?, guests = ?, booking_date = ?, advance_payment = ?, status = ?
+            WHERE id = ?
+            """,
+            (hall_name, event_type, guests, booking_date, advance_payment, status, booking_id),
+        )
+        get_db().commit()
+        flash("Booking updated successfully.", "success")
+        return redirect(url_for("admin"))
+
+    return render_template("admin_edit_booking.html", booking=booking_data, halls=HALLS, min_advance_payment=MIN_ADVANCE_PAYMENT)
+
+
+@app.route("/admin/bookings/<int:booking_id>/delete", methods=["POST"])
+def admin_delete_booking(booking_id):
+    if not admin_required():
+        return redirect(url_for("admin_login"))
+
+    get_db().execute("DELETE FROM bookings WHERE id = ?", (booking_id,))
+    get_db().commit()
+    flash("Booking deleted successfully.", "success")
+    return redirect(url_for("admin"))
 
 
 if __name__ == "__main__":

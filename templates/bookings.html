@@ -22,11 +22,8 @@
                     <td>{{ booking.booking_date }}</td>
                     <td>Rs. {{ "{:,}".format(booking.advance_payment) }}</td>
                     <td>{{ booking.status }}</td>
-                    <td class="row-actions">
-                        <a href="{{ url_for('edit_booking', booking_id=booking.id) }}">Edit</a>
-                        <form method="post" action="{{ url_for('delete_booking', booking_id=booking.id) }}">
-                            <button type="submit">Delete</button>
-                        </form>
+                    <td>
+                        <span class="text-muted">Managed by admin</span>
                     </td>
                 </tr>
                 {% else %}

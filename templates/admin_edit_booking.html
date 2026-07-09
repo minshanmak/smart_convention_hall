@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Edit Booking{% endblock %}
+{% block content %}
+<section class="form-page">
+    <form class="form-card" method="post">
+        <h1>Edit Booking</h1>
+        <label>Hall
+            <select name="hall_name" required>
+                {% for hall in halls %}
+                <option value="{{ hall.name }}" {% if hall.name == booking.hall_name %}selected{% endif %}>{{ hall.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>Event Type
+            <input name="event_type" value="{{ booking.event_type }}" required>
+        </label>
+        <label>Guests
+            <input type="number" name="guests" value="{{ booking.guests }}" min="1" required>
+        </label>
+        <label>Date
+            <input type="date" name="booking_date" value="{{ booking.booking_date }}" required>
+        </label>
+        <label>Advance Payment
+            <input type="number" name="advance_payment" value="{{ booking.advance_payment }}" min="{{ min_advance_payment }}" step="100" required>
+        </label>
+        <label>Status
+            <select name="status">
+                <option value="Confirmed" {% if booking.status == 'Confirmed' %}selected{% endif %}>Confirmed</option>
+                <option value="Pending" {% if booking.status == 'Pending' %}selected{% endif %}>Pending</option>
+                <option value="Rejected" {% if booking.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                <option value="Cancelled" {% if booking.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                <option value="Completed" {% if booking.status == 'Completed' %}selected{% endif %}>Completed</option>
+            </select>
+        </label>
+        <div class="row-actions">
+            <button class="button primary" type="submit">Save Changes</button>
+            <a class="button secondary" href="{{ url_for('admin') }}">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}
