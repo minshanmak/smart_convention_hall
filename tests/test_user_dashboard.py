@@ -41,7 +41,7 @@ class UserDashboardTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertIn("/dashboard", response.headers["Location"])
+        self.assertIn("/booking/1/payment", response.headers["Location"])
 
         dashboard_response = self.client.get("/dashboard")
         html = dashboard_response.get_data(as_text=True)
