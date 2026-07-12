@@ -319,7 +319,7 @@ def booking():
             )
             get_db().commit()
             flash("Hall booked successfully.", "success")
-            return redirect(url_for("booking_payment", booking_id=cursor.lastrowid))
+            return redirect(url_for("dashboard"))
 
     event_type = request.args.get("event_type", "Wedding")
     guests = int(request.args.get("guests", 500))

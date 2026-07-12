@@ -12,6 +12,25 @@
         <div><span>Status</span><strong>Active</strong></div>
     </div>
     <div class="table-card">
+        <h2>Your Recent Bookings</h2>
+        <table>
+            <thead><tr><th>Hall</th><th>Event</th><th>Date</th><th>Advance</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td>{{ booking.hall_name }}</td>
+                    <td>{{ booking.event_type }}</td>
+                    <td>{{ booking.booking_date }}</td>
+                    <td>Rs. {{ "{:,}".format(booking.advance_payment) }}</td>
+                    <td>{{ booking.status }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5">No bookings yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="table-card">
         <h2>Popular Halls</h2>
         <table>
             <thead><tr><th>Hall</th><th>Total Bookings</th></tr></thead>
